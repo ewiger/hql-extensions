@@ -56,6 +56,25 @@ installing:
 paths = ["../hql-extensions/crates/hql-ext-ml"]
 ```
 
+## Releasing a package
+
+Each crate is published to crates.io on its own under its crate name. To
+release one, set its `version` in `Cargo.toml` and in its registry entry,
+merge to `main`, and push the tag `<crate>-v<version>`:
+
+```sh
+git tag hql-ext-ml-v0.1.0 && git push origin hql-ext-ml-v0.1.0
+```
+
+[`release.yml`](.github/workflows/release.yml) checks that the tag, the
+crate's `Cargo.toml` and its registry entry agree, then runs `cargo publish`
+for that crate only. It authenticates by crates.io trusted publishing, which
+each crate's crates.io settings enable for this repository, the workflow
+`release.yml` and the environment `crates-io`. A crate's first version
+predates those settings: publish it with the repository secret
+`CARGO_REGISTRY_TOKEN` set, then enable trusted publishing and remove the
+secret.
+
 ## State
 
 The mechanism is being built on hql's `feat/extensions-ml` branch (issue

@@ -1,0 +1,86 @@
+name: Release
+
+# Publish one package to crates.io when its tag is pushed. A package is
+# tagged on its own as <crate>-v<version>, `hql-ext-ml-v0.1.0`; the tag
+# names the crate under crates/ to publish and the version its Cargo.toml
+# and its registry entry must both state.
+#
+# Authentication is crates.io trusted publishing: each crate's settings on
+# crates.io name this repository and this workflow file. A crate's first
+# version cannot be published that way; for it, set the repository secret
+# CARGO_REGISTRY_TOKEN, which takes precedence while it exists.
+
+on:
+  push:
+    tags: ["hql-ext-*-v[0-9]*"]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  publish:
+    name: Publish to crates.io
+    runs-on: ubuntu-latest
+    environment: crates-io
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      HAS_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read the crate and version from the tag
+        id: tag
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          crate="${tag%-v*}"
+          version="${tag##*-v}"
+          echo "crate=$crate" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Tag $tag publishes $crate $version"
+
+      - name: The tag, Cargo.toml and the registry agree
+        env:
+          CRATE: ${{ steps.tag.outputs.crate }}
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          if [ ! -f "crates/$CRATE/Cargo.toml" ]; then
+            echo "crates/$CRATE does not exist"; exit 1
+          fi
+          manifest=$(cargo metadata --no-deps --format-version 1 --locked \
+            | python3 -c '
+          import json, os, sys
+          crate = os.environ["CRATE"]
+          pkgs = [p for p in json.load(sys.stdin)["packages"] if p["name"] == crate]
+          print(pkgs[0]["version"] if pkgs else "")
+          ')
+          if [ "$manifest" != "$VERSION" ]; then
+            echo "crates/$CRATE/Cargo.toml states version '$manifest', the tag $VERSION"
+            exit 1
+          fi
+          registry=$(python3 -c '
+          import os, re
+          crate = os.environ["CRATE"]
+          text = open("hql-packages.yaml").read()
+          for entry in re.split(r"^\s+- ", text, flags=re.M)[1:]:
+              if re.search(r"^\s*crate:\s*" + re.escape(crate) + r"\s*$", entry, re.M):
+                  m = re.search(r"^\s*version:\s*(\S+)\s*$", entry, re.M)
+                  print(m.group(1) if m else "")
+                  break
+          ')
+          if [ "$registry" != "$VERSION" ]; then
+            echo "hql-packages.yaml pins $CRATE to '$registry', the tag $VERSION"
+            exit 1
+          fi
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: rust-lang/crates-io-auth-action@v1
+        id: auth
+        if: ${{ env.HAS_TOKEN != 'true' }}
+
+      - name: Publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || steps.auth.outputs.token }}
+        run: cargo publish -p "${{ steps.tag.outputs.crate }}" --locked
