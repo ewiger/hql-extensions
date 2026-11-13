@@ -1,0 +1,46 @@
+# 0001 — What the core does where the contracts and HQL-0057 part 2 are silent
+
+Status: todo
+Related: [HQL-0057 part 2](https://github.com/ewiger/hql/blob/main/doc/proposals/HQL-0057/parts/02-ml.md),
+[`modules/ml/mod.hql`](../../modules/ml/mod.hql),
+[`modules/ml/metrics.hql`](../../modules/ml/metrics.hql),
+[`src/core/`](../../src/core/mod.rs)
+
+`src/core/` implements `ml` and `ml.metrics` over plain Rust values. In four
+places it fixes behaviour that neither the contracts nor HQL-0057 part 2
+state, or depends on a constraint they do not record.
+
+## Gaps
+
+- **Logistic probabilities:** linfa treats whichever class is more frequent
+  as "positive". Without a fix, `predict` would sometimes return the
+  probability of class 0. The fit flips the model's signs when needed, so
+  `predict` always returns the probability of 1, as the contract says. A
+  test covers the case where 0 is the more frequent class.
+- **Version pins:** linfa 0.8 only works with `ndarray` 0.16 and
+  `rand_xoshiro` 0.6, so those are pinned rather than the newest versions.
+- **Empty inputs:** the metrics return NaN over empty lists, and `r2`
+  returns NaN when the actual values don't vary. The contracts say nothing
+  about these cases.
+- **Test fraction:** `split` rounds the test part up, so 3 rows at 0.2 give
+  1 test row.
+
+## Work
+
+1. State the probability of class 1 in the doc comment of
+   `predict(self: Logistic, …)` and in part 2, as the rule the
+   implementation keeps whatever linfa's labelling.
+2. Record the `ndarray` and `rand_xoshiro` pins beside the linfa
+   dependencies in `Cargo.toml`, so they move together when linfa does.
+3. Decide the result of each metric over empty lists, and of `r2` over
+   actual values that do not vary: NaN or a refusal. State it in
+   `metrics.hql` and part 2, and make the core match.
+4. State in `split`'s doc comment and in part 2 that the test part is the
+   `test` fraction of the rows rounded up.
+5. One checked example under `examples/` per rule above, once the natives
+   bind the core.
+
+## Done when
+
+- Every behaviour listed under Gaps is stated in a contract and in
+  HQL-0057 part 2, and pinned by a test or an example.
