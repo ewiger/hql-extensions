@@ -1,0 +1,49 @@
+name: CI
+
+# Check the registry against crates/, build every crate, and run each
+# crate's examples against hql built from a given ref. The examples step
+# waits for `hql package` to exist on hql's main.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      hql_ref:
+        description: The hql branch, tag or commit to build
+        default: main
+
+env:
+  CARGO_TERM_COLOR: always
+  HQL_REF: ${{ inputs.hql_ref || 'main' }}
+
+jobs:
+  registry:
+    name: Registry matches crates/
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Every crate is registered and every official entry is a crate
+        run: |
+          listed=$(python3 -c '
+          import re, sys
+          text = open("hql-packages.yaml").read()
+          crates = re.findall(r"^\s+crate:\s*(\S+)\s*$", text, re.M)
+          kinds = re.findall(r"^\s+kind:\s*(\S+)\s*$", text, re.M)
+          print("\n".join(c for c, k in zip(crates, kinds) if k == "official"))
+          ' | sort)
+          present=$(ls crates | sort)
+          if [ "$listed" != "$present" ]; then
+            echo "registry lists:"; echo "$listed"
+            echo "crates/ holds:"; echo "$present"
+            exit 1
+          fi
+
+  build:
+    name: Build the crates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --workspace --locked

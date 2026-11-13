@@ -1,0 +1,15 @@
+# The HQL package registry: every official package (a crate under crates/
+# of this repository) and every known package (a crate kept elsewhere,
+# admitted by pull request). `hql package` reads this file; the format is
+# HQL-0057 part 1. Every entry is pinned: an official one to the tag
+# <crate>-v<version>, a known one to a crates.io version or a git rev.
+
+registry: 1
+packages:
+  - name: ml
+    crate: hql-ext-ml
+    kind: official
+    version: 0.1.0
+    hql: ">=0.7.0, <0.8.0"
+    provides: [ml, ml.metrics]
+    description: Datasets from records, linear and logistic regression and k-means as values, prediction, and metrics
