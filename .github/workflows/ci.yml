@@ -1,8 +1,7 @@
 name: CI
 
-# Check the registry against crates/, build every crate, and run each
-# crate's examples against hql built from a given ref. The examples step
-# waits for `hql package` to exist on hql's main.
+# Check the registry against crates/, test every crate, and run each crate's
+# examples against hql built from a given ref.
 
 on:
   push:
@@ -40,10 +39,25 @@ jobs:
             exit 1
           fi
 
-  build:
-    name: Build the crates
+  examples:
+    name: Test the crates and run their examples
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # hql is built from source at the ref: a package compiles against the
+      # checkout its `hql` binary was built from, with the compiler it pins.
+      - name: Check out hql
+        run: git clone --depth 1 --branch "$HQL_REF" https://github.com/ewiger/hql "$RUNNER_TEMP/hql-src"
+      - name: Install the toolchain hql pins
+        working-directory: ${{ runner.temp }}/hql-src
+        run: rustup show active-toolchain || rustup toolchain install
       - uses: Swatinem/rust-cache@v2
-      - run: cargo build --workspace --locked
+      - name: Build hql
+        working-directory: ${{ runner.temp }}/hql-src
+        run: |
+          cargo install --path . --locked --root "$RUNNER_TEMP/hql"
+          echo "$RUNNER_TEMP/hql/bin" >> "$GITHUB_PATH"
+      - name: Test the crates
+        run: cargo test --workspace --config "patch.crates-io.hql.path=\"$RUNNER_TEMP/hql-src\""
+      - name: Run the examples
+        run: sh scripts/check-examples.sh

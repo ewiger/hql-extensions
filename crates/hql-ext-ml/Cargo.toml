@@ -6,11 +6,18 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
+readme = "README.md"
+keywords = ["hql", "machine-learning", "regression", "clustering"]
+categories = ["science"]
+# What a package is: the crate, the contracts `hql` binds it to, and the
+# examples that show it. The issue notes stay in the repository.
+include = ["/src", "/modules", "/examples/*.hql", "/examples/hql.toml", "/README.md"]
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+hql = "0.7"
 linfa = "0.8.1"
 linfa-clustering = "0.8.1"
 linfa-linear = "0.8.1"
@@ -18,7 +25,6 @@ linfa-logistic = "0.8.1"
 ndarray = "0.16"
 rand_xoshiro = "0.6"
 thiserror = "2.0.21"
-# `hql = "0.7"` once hql publishes `hql::ext` (HQL-0057 part 1).
 
 [package.metadata.hql]
 package = "ml"

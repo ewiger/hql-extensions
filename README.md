@@ -43,18 +43,30 @@ building or its author asks.
 
 ```sh
 git clone https://github.com/ewiger/hql-extensions && cd hql-extensions
-cargo build -p hql-ext-ml
+cargo test -p hql-ext-ml
 hql package install --path crates/hql-ext-ml
-hql eval 'import ml  [[1.0, 2.0], [2.0, 4.0]].Dataset(target = [3.0, 6.0]).fit_linear()'
+hql eval 'import ml
+Dataset([[1.0f], [2.0f], [3.0f]], target = [3.0f, 5.0f, 7.0f]).fit_linear()'
 ```
 
 While a crate is being changed, a workspace's `hql.toml` names it instead of
-installing:
+installing, and `hql` builds it on first use and again when its source is
+newer than the build:
 
 ```toml
 [packages]
 paths = ["../hql-extensions/crates/hql-ext-ml"]
 ```
+
+Each crate's `examples/` is such a workspace: `cd crates/hql-ext-ml/examples
+&& hql run linear.hql` runs an example against the checkout.
+`sh scripts/check-examples.sh` runs every example and holds it to its header,
+which is what CI does.
+
+A package is built against the `hql` that installs it, with that `hql`'s
+compiler. An `hql` built from a checkout builds packages against that
+checkout; a released `hql` builds them against the released crate of its own
+version. `HQL_SOURCE=<dir>` names a checkout explicitly.
 
 ## Releasing a package
 
@@ -68,7 +80,8 @@ git tag hql-ext-ml-v0.1.0 && git push origin hql-ext-ml-v0.1.0
 
 [`release.yml`](.github/workflows/release.yml) checks that the tag, the
 crate's `Cargo.toml` and its registry entry agree, then runs `cargo publish`
-for that crate only. It authenticates by crates.io trusted publishing, which
+for that crate only. A crate depends on `hql` by a version range, so the
+`hql` version it names is on crates.io before the crate is tagged. It authenticates by crates.io trusted publishing, which
 each crate's crates.io settings enable for this repository, the workflow
 `release.yml` and the environment `crates-io`. A crate's first version
 predates those settings: publish it with the repository secret
@@ -77,6 +90,8 @@ secret.
 
 ## State
 
-The mechanism is being built on hql's `feat/extensions-ml` branch (issue
-0077). `hql` has no `package` command yet and no `hql::ext` API; the crates
-here hold their contracts and a library that does not yet implement them.
+`hql` 0.7.0 carries `hql::ext`, the loader and `hql package`. `ml` installs
+from a checkout with `--path` now, and by name once `hql` 0.7.0 is on
+crates.io and the tag `hql-ext-ml-v0.1.0` is pushed. `Cargo.lock` holds
+`hql` as resolved against a checkout until then; run `cargo update -p hql`
+once 0.7.0 is published, before the first tag.

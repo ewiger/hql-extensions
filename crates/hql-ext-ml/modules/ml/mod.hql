@@ -1,6 +1,12 @@
-//! Module `ml`, provided by the `ml` package: a dataset built from records
-//! or from rows of features, a model fitted over it and kept as a value,
-//! and prediction. The metrics are `ml.metrics`. HQL-0057 part 2.
+// The contract of module `ml`: every function is declared without a body,
+// and the `ml` package's extension implements it. HQL-0057 part 2.
+
+/// A dataset built from records or from rows of features, a model fitted
+/// over it and kept as a value, and prediction. The metrics are
+/// `ml.metrics`.
+module ml
+
+import core
 
 /// A dataset: one row of `Float` features per observation, and the target
 /// per row where the dataset is labelled.
@@ -15,7 +21,9 @@ fn Dataset(features: List<List<Float>>) : Dataset
 
 /// A labelled dataset read from values: each function in `features`
 /// gives one feature of a value, in order, and `target` gives its target:
-/// `houses.dataset([h => h.area, h => h.rooms], target = h => h.price)`.
+/// `houses.dataset([(h: House) => h.area, (h: House) => h.rooms],
+/// target = h => h.price)`. A function written inside the list states its
+/// parameter's type.
 fn dataset<T>(self: Collection<T>, features: List<T -> Float>, *, target: T -> Float) : Dataset
 
 /// An unlabelled dataset read from values.
@@ -25,13 +33,15 @@ fn dataset<T>(self: Collection<T>, features: List<T -> Float>) : Dataset
 type Split = { train : Dataset, test : Dataset }
 
 /// `self` split into a training and a test part after a shuffle: the last
-/// `test` fraction of rows is the test part. `seed` fixes the shuffle;
-/// absent, the program's `random` seed is read.
+/// `test` fraction of rows is the test part. With a `seed` the split is
+/// pure, a function of the seed and the dataset. Without one it is
+/// effectful and draws from the evaluation seed, which `--seed` fixes.
 fn split(self: Dataset, *, test: Float = 0.2, seed: Int) : Split
+effectful fn split(self: Dataset, *, test: Float = 0.2) : Split
 
 /// A fitted model. Each kind is a record whose fields are readable and
 /// printable as any record's are.
-type Model : {Debug}
+abstract type Model
 
 /// A linear regression: a coefficient per feature and an intercept.
 type Linear : Model { coefficients : List<Float>, intercept : Float }

@@ -1,6 +1,11 @@
-//! Module `ml.metrics`, provided by the `ml` package: how far predictions
-//! are from what was observed. Each function refuses lists of unequal
-//! length. Imported by name: `import ml.metrics`. HQL-0057 part 2.
+// The contract of module `ml.metrics`: every function is declared without
+// a body, and the `ml` package's extension implements it. HQL-0057 part 2.
+
+/// How far predictions are from what was observed. Each function refuses
+/// lists of unequal length. Imported by name: `import ml.metrics`.
+module ml.metrics
+
+import core
 
 /// The root of the mean squared difference.
 fn rmse(predicted: List<Float>, actual: List<Float>) : Float
