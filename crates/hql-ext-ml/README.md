@@ -5,7 +5,8 @@ models as values, prediction and metrics, over
 [linfa](https://github.com/rust-ml/linfa).
 
 ```sh
-hql package install ml
+hql package install ml          # into the project, .hql/packages/ml/
+hql package install --home ml   # into the HQL home, for every run
 ```
 
 ```hql
@@ -40,8 +41,8 @@ does not link it: `hql package install` builds it on your machine against the
   converts the HQL values of a call, runs the computation, and converts the
   result.
 - `src/lib.rs` states the extension with `hql::extension!`.
-- `examples/` holds checked HQL programs, and an `hql.toml` that loads the
-  package from this checkout.
+- `examples/` holds checked HQL programs, and is a project: its
+  `.hql/config.toml` loads the package from this checkout.
 
 The crate is on crates.io so that `hql package` and `cargo` can fetch a
 pinned version of it. Its Rust API is the package's implementation, not a

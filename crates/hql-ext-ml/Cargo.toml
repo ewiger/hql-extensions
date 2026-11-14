@@ -11,7 +11,7 @@ keywords = ["hql", "machine-learning", "regression", "clustering"]
 categories = ["science"]
 # What a package is: the crate, the contracts `hql` binds it to, and the
 # examples that show it. The issue notes stay in the repository.
-include = ["/src", "/modules", "/examples/*.hql", "/examples/hql.toml", "/README.md"]
+include = ["/src", "/modules", "/examples/*.hql", "/examples/.hql/config.toml", "/README.md"]
 
 [lib]
 crate-type = ["cdylib", "rlib"]

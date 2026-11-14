@@ -1,0 +1,6 @@
+# The project of the package's examples. `[packages] paths` names the
+# crate of a package under development, against the project root, the
+# directory holding `.hql/`: `hql` builds it on first use and loads it, so
+# `import ml` in a program here reaches this checkout without an install.
+[packages]
+paths = [".."]

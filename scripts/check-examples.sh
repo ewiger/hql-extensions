@@ -2,7 +2,7 @@
 # Run every example of every crate with the `hql` on PATH and hold it to its
 # header: a `valid-now` example prints its `// expected:` value and checks to
 # its `// expected-type:`; an `invalid` one fails with the `// kind:` it
-# names. Each crate's `examples/hql.toml` lists the crate under `[packages]
+# names. Each crate's `examples/.hql/config.toml` lists the crate under `[packages]
 # paths`, so `hql` builds the package from this checkout on first use.
 set -eu
 

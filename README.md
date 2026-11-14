@@ -5,9 +5,12 @@ of known ones. A package is a Cargo crate whose library is an HQL extension:
 the implementations of the external declarations of the modules it provides,
 beside those modules' contracts. `hql package install <name>` builds a
 package from this repository with your `cargo` against the `hql` you run and
-installs it into `~/.hql/lib/<name>/`; `import <module>` in a program then
+installs it into the project, `.hql/packages/<name>/`, or with `--home` into
+the HQL home, `~/.hql/packages/<name>/`; `import <module>` in a program then
 reaches it as it reaches a standard module. The design is
-[HQL-0057](https://github.com/ewiger/hql/blob/main/doc/proposals/HQL-0057/README.md).
+[HQL-0057](https://github.com/ewiger/hql/blob/main/doc/proposals/HQL-0057/index.hmd),
+and the two levels are
+[HQL-0059](https://github.com/ewiger/hql/blob/main/doc/proposals/HQL-0059/index.hmd).
 
 | Package | Crate | Provides | What it does |
 | --- | --- | --- | --- |
@@ -44,21 +47,22 @@ building or its author asks.
 ```sh
 git clone https://github.com/ewiger/hql-extensions && cd hql-extensions
 cargo test -p hql-ext-ml
-hql package install --path crates/hql-ext-ml
+hql package install --home --path crates/hql-ext-ml
 hql eval 'import ml
 Dataset([[1.0f], [2.0f], [3.0f]], target = [3.0f, 5.0f, 7.0f]).fit_linear()'
 ```
 
-While a crate is being changed, a workspace's `hql.toml` names it instead of
-installing, and `hql` builds it on first use and again when its source is
-newer than the build:
+While a crate is being changed, a project's `.hql/config.toml` names it
+instead of installing, and `hql` builds it on first use and again when its
+source is newer than the build. The path is read against the project root,
+the directory holding `.hql/`:
 
 ```toml
 [packages]
 paths = ["../hql-extensions/crates/hql-ext-ml"]
 ```
 
-Each crate's `examples/` is such a workspace: `cd crates/hql-ext-ml/examples
+Each crate's `examples/` is such a project: `cd crates/hql-ext-ml/examples
 && hql run linear.hql` runs an example against the checkout.
 `sh scripts/check-examples.sh` runs every example and holds it to its header,
 which is what CI does.
