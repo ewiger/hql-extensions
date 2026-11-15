@@ -74,13 +74,31 @@ jobs:
             exit 1
           fi
 
+      # A version already on crates.io is done: a first version is published
+      # by hand, since trusted publishing needs the crate to exist, and its
+      # tag still has to be pushed, because the registry pins to it.
+      - name: Skip a version already published
+        id: published
+        env:
+          CRATE: ${{ steps.tag.outputs.crate }}
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' -A "hql-extensions release" \
+            "https://crates.io/api/v1/crates/$CRATE/$VERSION")
+          if [ "$code" = "200" ]; then
+            echo "$CRATE $VERSION is already on crates.io"
+            echo "done=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: Swatinem/rust-cache@v2
+        if: ${{ steps.published.outputs.done != 'true' }}
 
       - uses: rust-lang/crates-io-auth-action@v1
         id: auth
-        if: ${{ env.HAS_TOKEN != 'true' }}
+        if: ${{ env.HAS_TOKEN != 'true' && steps.published.outputs.done != 'true' }}
 
       - name: Publish
+        if: ${{ steps.published.outputs.done != 'true' }}
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || steps.auth.outputs.token }}
         run: cargo publish -p "${{ steps.tag.outputs.crate }}" --locked

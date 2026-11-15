@@ -1495,6 +1495,8 @@ dependencies = [
 [[package]]
 name = "hql"
 version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b6a183c47cbe83009855487a236001b3444fca56baa89d08e027515268de598"
 dependencies = [
  "aes-gcm 0.11.1",
  "age",
@@ -1511,6 +1513,7 @@ dependencies = [
  "futures-util",
  "getrandom 0.4.3",
  "hmac 0.13.0",
+ "hypermarkdown",
  "jiff",
  "jiff-tzdb",
  "libloading",
@@ -1598,6 +1601,17 @@ dependencies = [
  "subtle",
  "typenum",
  "zeroize",
+]
+
+[[package]]
+name = "hypermarkdown"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d0d8c3303c0d6f90f2b60b8ea4ea707abfeedf11c129d6b382a8cf681867410f"
+dependencies = [
+ "serde",
+ "serde_yaml_ng",
+ "toml 1.2.1+spec-1.1.0",
 ]
 
 [[package]]
